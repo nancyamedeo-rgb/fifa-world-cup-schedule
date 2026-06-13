@@ -164,7 +164,7 @@ For matches not yet played, use status "upcoming" and score null.
 For live matches, use status "live" and current score.
 For completed matches, use status "completed" and final score like "2-1".`;
 
-    const res = await fetch("https://claude.ai/api/anthropic-proxy/v1/messages", {
+    const res = await fetch("https://fifa-proxy.nancyamedeo.workers.dev", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
