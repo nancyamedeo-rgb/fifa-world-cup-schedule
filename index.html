@@ -172,7 +172,7 @@ For completed matches, use status "completed" and final score like "2-1".`;
         max_tokens: 1000,
         system: "You are a data API. You must respond with raw JSON only — no prose, no markdown, no code fences, no explanation. Your entire response must be parseable by JSON.parse().",
         tools: [{ type: "web_search_20250305", name: "web_search" }],
-        messages: [{ role: "user", content: prompt }]
+        messages: [{ role: "user", content: prompt }, { role: "assistant", content: "[" }]
       })
     });
 
@@ -182,9 +182,7 @@ For completed matches, use status "completed" and final score like "2-1".`;
       .map(b => b.text).join("");
 
     // Extract JSON array even if Claude wraps it in text
-    const match = text.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error("No JSON array found in response: " + text.slice(0, 100));
-    const results = JSON.parse(match[0]);
+    const results = JSON.parse("[" + text);
     results.forEach(r => { scoreCache[r.id] = { score: r.score, status: r.status }; });
 
     const now = new Date();
