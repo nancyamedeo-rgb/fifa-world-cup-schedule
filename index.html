@@ -172,17 +172,22 @@ For completed matches, use status "completed" and final score like "2-1".`;
         max_tokens: 1000,
         system: "You are a data API. You must respond with raw JSON only — no prose, no markdown, no code fences, no explanation. Your entire response must be parseable by JSON.parse().",
         tools: [{ type: "web_search_20250305", name: "web_search" }],
-        messages: [{ role: "user", content: prompt }, { role: "assistant", content: "[" }]
+        messages: [{ role: "user", content: prompt }]
       })
     });
 
+    if (!res.ok) { const err = await res.text(); throw new Error("API " + res.status + ": " + err.slice(0,200)); }
     const data = await res.json();
     const text = data.content
       .filter(b => b.type === "text")
       .map(b => b.text).join("");
 
     // Extract JSON array even if Claude wraps it in text
-    const results = JSON.parse("[" + text);
+    // Log raw response for debugging
+    console.log("Raw API response:", text.slice(0, 300));
+    const arrMatch = text.match(/\[[\s\S]*\]/);
+    if (!arrMatch) throw new Error("No JSON array in: " + text.slice(0, 200));
+    const results = JSON.parse(arrMatch[0]);
     results.forEach(r => { scoreCache[r.id] = { score: r.score, status: r.status }; });
 
     const now = new Date();
