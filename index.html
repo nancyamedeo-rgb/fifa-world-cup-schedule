@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIFA World Cup 2026 – Schedule</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;600;700&display=swap');
+  * { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --gold:#C9A84C; --gold2:#F0C94A; --navy:#0A0E1A; --navy2:#111827;
+    --navy3:#1A2235; --gray:#6B7280; --white:#FFFFFF;
+    --green:#22C55E; --red:#EF4444; --blue:#3B82F6;
+  }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:var(--navy); font-family:'Inter',sans-serif; color:var(--white); }
+
+  header {
+    display:flex; align-items:center; gap:20px; padding:12px 32px;
+    background:linear-gradient(135deg,#0A0E1A 0%,#1A2235 50%,#0D1B3E 100%);
+    border-bottom:2px solid var(--gold); height:90px;
+  }
+  .logo-placeholder {
+    width:60px; height:60px; border:2px dashed var(--gold); border-radius:8px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9px; color:var(--gold); text-align:center; line-height:1.3; padding:4px; flex-shrink:0;
+  }
+  .header-title h1 { font-family:'Bebas Neue',sans-serif; font-size:38px; letter-spacing:3px; color:var(--gold2); line-height:1; }
+  .header-title p  { font-size:13px; color:var(--gray); letter-spacing:2px; text-transform:uppercase; margin-top:3px; }
+  .header-meta { margin-left:auto; text-align:right; }
+  .clock { font-family:'Bebas Neue',sans-serif; font-size:28px; color:var(--white); letter-spacing:2px; line-height:1; }
+  #statusBar { font-size:10px; color:var(--gray); margin-top:4px; letter-spacing:0.5px; }
+  #statusBar.loading { color:var(--gold); }
+  #statusBar.error   { color:var(--red); }
+
+  .scroll-wrapper { height:990px; overflow:hidden; position:relative; }
+  .scroll-track { display:flex; flex-direction:column; }
+
+  .day-block { padding:0 32px; }
+  .day-header { display:flex; align-items:center; gap:14px; padding:10px 0 6px; }
+  .day-label { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; color:var(--gold2); white-space:nowrap; }
+  .day-divider { flex:1; height:1px; background:linear-gradient(to right,var(--gold),transparent); }
+  .day-status { font-size:10px; letter-spacing:1.5px; text-transform:uppercase; padding:3px 10px; border-radius:99px; font-weight:600; }
+  .day-status.completed { background:#1F2937; color:var(--gray); }
+  .day-status.today     { background:var(--gold); color:var(--navy); }
+  .day-status.upcoming  { background:#1E3A5F; color:#60A5FA; }
+
+  .matches-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding-bottom:10px; }
+  .match-card {
+    background:var(--navy3); border:1px solid #1F2937; border-radius:10px;
+    padding:10px 14px; display:grid; grid-template-columns:1fr auto 1fr;
+    align-items:center; gap:8px;
+  }
+  .match-card.is-completed { opacity:0.75; }
+  .match-card.is-live { border-color:var(--green); box-shadow:0 0 12px rgba(34,197,94,0.25); }
+  .team { display:flex; align-items:center; gap:7px; }
+  .team.away { flex-direction:row-reverse; text-align:right; }
+  .flag { font-size:22px; line-height:1; }
+  .team-name { font-size:13px; font-weight:600; letter-spacing:0.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:140px; }
+  .match-center { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:80px; }
+  .score { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:4px; color:var(--white); line-height:1; }
+  .score.pending { font-size:14px; color:var(--gray); letter-spacing:2px; font-family:'Inter',sans-serif; font-weight:600; }
+  .match-info { font-size:9px; color:var(--gray); text-align:center; letter-spacing:0.5px; line-height:1.5; }
+  .group-badge { font-size:9px; font-weight:700; letter-spacing:1px; color:var(--gold); text-transform:uppercase; }
+  .live-badge { background:var(--green); color:#000; font-size:8px; font-weight:700; letter-spacing:1px; padding:2px 6px; border-radius:4px; animation:pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+
+  .skeleton { background:linear-gradient(90deg,#1A2235 25%,#243050 50%,#1A2235 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:10px; height:80px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-placeholder">ADD<br>fifa_logo<br>.jpg</div>
+  <div class="header-title">
+    <h1>FIFA World Cup 2026 · Match Schedule</h1>
+    <p>USA · Canada · Mexico · June 11 – July 19, 2026</p>
+  </div>
+  <div class="header-meta">
+    <div class="clock" id="clock">--:--</div>
+    <div id="statusBar">Loading scores…</div>
+  </div>
+</header>
+
+<div class="scroll-wrapper">
+  <div class="scroll-track" id="scrollTrack">
+    <div class="day-block">
+      <div class="matches-grid">
+        <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATIC FIXTURE SKELETON  (dates, teams, venues)
+   scores / status are overwritten by the AI poll
+═══════════════════════════════════════════════════════ */
+const FIXTURES = [
+  { date:"Thu Jun 11", group:"A", home:"🇲🇽", homeN:"Mexico",      away:"🇿🇦", awayN:"South Africa", time:"3:00 PM ET",  venue:"Azteca, Mexico City",       id:"MEX-RSA" },
+  { date:"Thu Jun 11", group:"A", home:"🇰🇷", homeN:"South Korea", away:"🇨🇿", awayN:"Czechia",      time:"7:00 PM ET",  venue:"Akron, Zapopan",             id:"KOR-CZE" },
+  { date:"Fri Jun 12", group:"B", home:"🇨🇦", homeN:"Canada",      away:"🇧🇦", awayN:"Bosnia-Herz.", time:"3:00 PM ET",  venue:"BMO Field, Toronto",         id:"CAN-BIH" },
+  { date:"Fri Jun 12", group:"D", home:"🇺🇸", homeN:"USA",         away:"🇵🇾", awayN:"Paraguay",     time:"8:00 PM ET",  venue:"SoFi Stadium, LA",           id:"USA-PAR" },
+  { date:"Sat Jun 13", group:"B", home:"🇶🇦", homeN:"Qatar",       away:"🇨🇭", awayN:"Switzerland",  time:"3:00 PM ET",  venue:"Levi's, Santa Clara",        id:"QAT-SUI" },
+  { date:"Sat Jun 13", group:"C", home:"🇧🇷", homeN:"Brazil",      away:"🇲🇦", awayN:"Morocco",      time:"6:00 PM ET",  venue:"MetLife, NJ",                id:"BRA-MAR" },
+  { date:"Sat Jun 13", group:"C", home:"🇭🇹", homeN:"Haiti",       away:"🏴󠁧󠁢󠁳󠁣󠁴󠁿", awayN:"Scotland",    time:"9:00 PM ET",  venue:"Gillette, Foxborough",       id:"HAI-SCO" },
+  { date:"Sun Jun 14", group:"D", home:"🇦🇺", homeN:"Australia",   away:"🇹🇷", awayN:"Türkiye",      time:"12:00 AM ET", venue:"BC Place, Vancouver",        id:"AUS-TUR" },
+  { date:"Sun Jun 14", group:"E", home:"🇩🇪", homeN:"Germany",     away:"🇨🇼", awayN:"Curaçao",      time:"1:00 PM ET",  venue:"NRG Stadium, Houston",       id:"GER-CUW" },
+  { date:"Sun Jun 14", group:"F", home:"🇳🇱", homeN:"Netherlands", away:"🇯🇵", awayN:"Japan",         time:"4:00 PM ET",  venue:"AT&T Stadium, Arlington",    id:"NED-JPN" },
+  { date:"Sun Jun 14", group:"E", home:"🇨🇮", homeN:"Ivory Coast", away:"🇪🇨", awayN:"Ecuador",      time:"7:00 PM ET",  venue:"Lincoln Financial, Philly",  id:"CIV-ECU" },
+  { date:"Sun Jun 14", group:"F", home:"🇸🇪", homeN:"Sweden",      away:"🇹🇳", awayN:"Tunisia",      time:"10:00 PM ET", venue:"BBVA, Monterrey",            id:"SWE-TUN" },
+  { date:"Mon Jun 15", group:"H", home:"🇪🇸", homeN:"Spain",       away:"🇨🇻", awayN:"Cape Verde",   time:"12:00 PM ET", venue:"Mercedes-Benz, Atlanta",     id:"ESP-CPV" },
+  { date:"Mon Jun 15", group:"G", home:"🇧🇪", homeN:"Belgium",     away:"🇪🇬", awayN:"Egypt",         time:"3:00 PM ET",  venue:"Lumen Field, Seattle",       id:"BEL-EGY" },
+  { date:"Mon Jun 15", group:"H", home:"🇸🇦", homeN:"Saudi Arabia",away:"🇺🇾", awayN:"Uruguay",      time:"6:00 PM ET",  venue:"Hard Rock, Miami",           id:"KSA-URU" },
+  { date:"Mon Jun 15", group:"G", home:"🇮🇷", homeN:"Iran",        away:"🇳🇿", awayN:"New Zealand",  time:"9:00 PM ET",  venue:"SoFi Stadium, Inglewood",    id:"IRN-NZL" },
+  { date:"Tue Jun 16", group:"I", home:"🇫🇷", homeN:"France",      away:"🇸🇳", awayN:"Senegal",      time:"3:00 PM ET",  venue:"MetLife, NJ",                id:"FRA-SEN" },
+  { date:"Tue Jun 16", group:"I", home:"🇮🇶", homeN:"Iraq",        away:"🇳🇴", awayN:"Norway",        time:"6:00 PM ET",  venue:"Gillette, Foxborough",       id:"IRQ-NOR" },
+  { date:"Tue Jun 16", group:"J", home:"🇦🇷", homeN:"Argentina",   away:"🇩🇿", awayN:"Algeria",      time:"9:00 PM ET",  venue:"Arrowhead, Kansas City",     id:"ARG-ALG" },
+  { date:"Wed Jun 17", group:"J", home:"🇦🇹", homeN:"Austria",     away:"🇯🇴", awayN:"Jordan",        time:"12:00 PM ET", venue:"State Farm, Glendale",       id:"AUT-JOR" },
+  { date:"Wed Jun 17", group:"K", home:"🇵🇹", homeN:"Portugal",    away:"🇨🇩", awayN:"DR Congo",     time:"3:00 PM ET",  venue:"AT&T Stadium, Arlington",    id:"POR-COD" },
+  { date:"Wed Jun 17", group:"L", home:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", homeN:"England",    away:"🇭🇷", awayN:"Croatia",      time:"6:00 PM ET",  venue:"AT&T Stadium, Arlington",    id:"ENG-CRO" },
+  { date:"Wed Jun 17", group:"K", home:"🇺🇿", homeN:"Uzbekistan",  away:"🇨🇴", awayN:"Colombia",     time:"9:00 PM ET",  venue:"Levi's, Santa Clara",        id:"UZB-COL" },
+  { date:"Thu Jun 18", group:"L", home:"🇬🇭", homeN:"Ghana",       away:"🇵🇦", awayN:"Panama",        time:"12:00 PM ET", venue:"NRG Stadium, Houston",       id:"GHA-PAN" },
+  { date:"Thu Jun 18", group:"A", home:"🇲🇽", homeN:"Mexico",      away:"🇰🇷", awayN:"South Korea",  time:"3:00 PM ET",  venue:"AT&T Stadium, Arlington",    id:"MEX-KOR" },
+  { date:"Thu Jun 18", group:"A", home:"🇨🇿", homeN:"Czechia",     away:"🇿🇦", awayN:"South Africa", time:"3:00 PM ET",  venue:"Akron, Zapopan",             id:"CZE-RSA" },
+  { date:"Thu Jun 18", group:"B", home:"🇨🇦", homeN:"Canada",      away:"🇶🇦", awayN:"Qatar",        time:"6:00 PM ET",  venue:"BMO Field, Toronto",         id:"CAN-QAT" },
+  { date:"Thu Jun 18", group:"B", home:"🇧🇦", homeN:"Bosnia-Herz.",away:"🇨🇭", awayN:"Switzerland",  time:"6:00 PM ET",  venue:"Levi's, Santa Clara",        id:"BIH-SUI" },
+  { date:"Fri Jun 19", group:"D", home:"🇺🇸", homeN:"USA",         away:"🇦🇺", awayN:"Australia",    time:"3:00 PM ET",  venue:"Lumen Field, Seattle",       id:"USA-AUS" },
+  { date:"Fri Jun 19", group:"D", home:"🇹🇷", homeN:"Türkiye",     away:"🇵🇾", awayN:"Paraguay",     time:"6:00 PM ET",  venue:"Mercedes-Benz, Atlanta",     id:"TUR-PAR" },
+  { date:"Fri Jun 19", group:"C", home:"🇧🇷", homeN:"Brazil",      away:"🇭🇹", awayN:"Haiti",        time:"9:00 PM ET",  venue:"MetLife, NJ",                id:"BRA-HAI" },
+  { date:"Fri Jun 19", group:"C", home:"🇲🇦", homeN:"Morocco",     away:"🏴󠁧󠁢󠁳󠁣󠁴󠁿", awayN:"Scotland",    time:"9:00 PM ET",  venue:"Hard Rock, Miami",           id:"MAR-SCO" },
+  { date:"Sat Jun 20–22", group:"E–H", home:"⚽", homeN:"Matchday 2", away:"", awayN:"Groups E–H", time:"Various", venue:"Multiple Venues", id:"MD2-EH" },
+  { date:"Sun Jun 23–25", group:"I–L", home:"⚽", homeN:"Matchday 2", away:"", awayN:"Groups I–L", time:"Various", venue:"Multiple Venues", id:"MD2-IL" },
+  { date:"Jun 25–27",     group:"A–L", home:"⚽", homeN:"Matchday 3", away:"", awayN:"All Groups (Simultaneous)", time:"Various", venue:"Multiple Venues", id:"MD3" },
+  { date:"Jun 28–Jul 3",  group:"R32", home:"⚽", homeN:"Round of 32", away:"", awayN:"32 Teams", time:"TBD", venue:"Multiple Venues", id:"R32" },
+  { date:"Jul 4–7",       group:"R16", home:"⚽", homeN:"Round of 16", away:"", awayN:"16 Teams", time:"TBD", venue:"Multiple Venues", id:"R16" },
+  { date:"Jul 9–11",      group:"QF",  home:"⚽", homeN:"Quarterfinals", away:"", awayN:"8 Teams", time:"TBD", venue:"Multiple Venues", id:"QF" },
+  { date:"Jul 14–15",     group:"SF",  home:"⚽", homeN:"Semifinals", away:"", awayN:"4 Teams", time:"TBD", venue:"Multiple Venues", id:"SF" },
+  { date:"Jul 18",        group:"3RD", home:"⚽", homeN:"Third Place", away:"", awayN:"Play-Off", time:"TBD", venue:"MetLife Stadium, NJ", id:"3PL" },
+  { date:"Jul 19",        group:"🏆",  home:"⚽", homeN:"WORLD CUP FINAL", away:"", awayN:"Champion", time:"3:00 PM ET", venue:"MetLife Stadium, NJ", id:"FINAL" },
+];
+
+/* ── live score cache: { id -> { score, status } } ── */
+let scoreCache = {};
+
+/* ═══════════════════════════════════════════════════════
+   AI SCORE POLL  – calls Claude with web_search
+═══════════════════════════════════════════════════════ */
+async function fetchScores() {
+  setStatus("Fetching latest scores…", "loading");
+  try {
+    const today = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+    const prompt = `Today is ${today}. Search for the latest 2026 FIFA World Cup match results and scores.
+
+Return ONLY a JSON array — no markdown, no explanation. Each element:
+{ "id": "<match_id>", "score": "<home_goals>-<away_goals> or null if not played", "status": "completed|live|upcoming" }
+
+Match IDs to look up (home vs away):
+${FIXTURES.filter(f => !["MD2-EH","MD2-IL","MD3","R32","R16","QF","SF","3PL","FINAL"].includes(f.id))
+  .map(f => `${f.id}: ${f.homeN} vs ${f.awayN} (${f.date})`).join('\n')}
+
+For matches not yet played, use status "upcoming" and score null.
+For live matches, use status "live" and current score.
+For completed matches, use status "completed" and final score like "2-1".`;
+
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        tools: [{ type: "web_search_20250305", name: "web_search" }],
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content
+      .filter(b => b.type === "text")
+      .map(b => b.text).join("");
+
+    const clean = text.replace(/```json|```/g, "").trim();
+    const results = JSON.parse(clean);
+    results.forEach(r => { scoreCache[r.id] = { score: r.score, status: r.status }; });
+
+    const now = new Date();
+    setStatus(`Scores updated ${now.toLocaleTimeString()} · Next update in 1 hr`, "");
+  } catch(e) {
+    console.error("Score fetch error:", e);
+    setStatus("Score update failed — retrying next cycle", "error");
+  }
+  renderSchedule();
+}
+
+/* ── UI helpers ── */
+function setStatus(msg, cls) {
+  const el = document.getElementById("statusBar");
+  el.textContent = msg;
+  el.className = cls || "";
+}
+
+/* ── RENDER ── */
+function groupByDate(arr) {
+  const map = new Map();
+  arr.forEach(m => { if (!map.has(m.date)) map.set(m.date, []); map.get(m.date).push(m); });
+  return map;
+}
+
+function buildCard(m) {
+  const cached = scoreCache[m.id] || {};
+  const status = cached.status || "upcoming";
+  const score  = cached.score || null;
+
+  const today = new Date().toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  let dayStatus = status === "completed" ? "completed"
+                : status === "live"      ? "live"
+                : m.date.includes(today) ? "today"
+                : "upcoming";
+
+  const scoreHTML = score
+    ? `<div class="score">${score.replace("-","–")}</div>`
+    : `<div class="score pending">${m.time}</div>`;
+
+  const badge = status === "live"
+    ? `<span class="live-badge">LIVE</span>`
+    : `<span class="group-badge">GROUP ${m.group}</span>`;
+
+  return `<div class="match-card ${status === 'completed' ? 'is-completed' : ''} ${status === 'live' ? 'is-live' : ''}">
+    <div class="team"><span class="flag">${m.home}</span><span class="team-name">${m.homeN}</span></div>
+    <div class="match-center">${scoreHTML}${badge}<div class="match-info">${m.venue}</div></div>
+    <div class="team away"><span class="flag">${m.away}</span><span class="team-name">${m.awayN}</span></div>
+  </div>`;
+}
+
+function renderSchedule() {
+  const track = document.getElementById("scrollTrack");
+  const groups = groupByDate(FIXTURES);
+  let html = "";
+  groups.forEach((matches, date) => {
+    const s = scoreCache[matches[0]?.id]?.status || "upcoming";
+    const statusClass = s === "completed" ? "completed" : s === "live" ? "today" : "upcoming";
+    const label = s === "completed" ? "Completed" : s === "live" ? "Live" : "Upcoming";
+    html += `<div class="day-block">
+      <div class="day-header">
+        <span class="day-label">${date}</span>
+        <div class="day-divider"></div>
+        <span class="day-status ${statusClass}">${label}</span>
+      </div>
+      <div class="matches-grid">${matches.map(buildCard).join("")}</div>
+    </div>`;
+  });
+  track.innerHTML = html + html; // duplicate for infinite scroll
+  startScroll();
+}
+
+/* ── AUTO SCROLL ── */
+let scrollPos = 0, scrollRAF = null;
+function startScroll() {
+  if (scrollRAF) cancelAnimationFrame(scrollRAF);
+  const track = document.getElementById("scrollTrack");
+  const half  = track.scrollHeight / 2;
+  function step() {
+    scrollPos += 0.55;
+    if (scrollPos >= half) scrollPos = 0;
+    track.style.transform = `translateY(-${scrollPos}px)`;
+    scrollRAF = requestAnimationFrame(step);
+  }
+  scrollRAF = requestAnimationFrame(step);
+}
+
+/* ── CLOCK ── */
+function updateClock() {
+  const n = new Date();
+  document.getElementById("clock").textContent =
+    n.getHours().toString().padStart(2,"0") + ":" + n.getMinutes().toString().padStart(2,"0");
+}
+
+/* ── BOOT ── */
+fetchScores();
+setInterval(fetchScores, 60 * 60 * 1000);   // re-poll every hour
+setTimeout(() => location.reload(), 15 * 60 * 1000); // hard refresh every 15 min
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
